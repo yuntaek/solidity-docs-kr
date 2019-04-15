@@ -336,11 +336,10 @@ Enums
             choice = ActionChoices.GoStraight;
         }
 
-        // Since enum types are not part of the ABI, the signature of "getChoice"
-        // will automatically be changed to "getChoice() returns (uint8)"
-        // for all matters external to Solidity. The integer type used is just
-        // large enough to hold all enum values, i.e. if you have more values,
-        // `uint16` will be used and so on.
+        // enum 타입은 ABI의 파트가 아니므로, "getChoice의 서명은 Solidity의 모든 외부적인 문제를 위한  
+        // "getChoice() returns (uint8)"로  변경 될 것입니다. 사용되어지는 integer 타입은 
+        // 모든 enum의 값들을 충분히 담을 만큼의 크기를 가집니다. (더 많은 값들을 가진다면 `uint16` 등이 사용될 것입니다.) 
+
         function getChoice() public view returns (ActionChoices) {
             return choice;
         }
@@ -406,8 +405,8 @@ Enums
     pragma solidity ^0.4.16;
 
     library ArrayUtils {
-      // internal functions can be used in internal library functions because
-      // they will be part of the same code context
+      // 내부 함수와 내부 라이브러리 함수 들은 같은 코드 콘텍스트의 한 부분이 될 것이므로, 
+      // 내부 함수들은 내부 라이브러리 함수안에서 사용될 수 있습니다.
       function map(uint[] memory self, function (uint) pure returns (uint) f)
         internal
         pure
@@ -468,19 +467,19 @@ Enums
         emit NewRequest(requests.length - 1);
       }
       function reply(uint requestID, bytes response) public {
-        // Here goes the check that the reply comes from a trusted source
+        // 여기에서 답장이 신뢰 되는 소스로 부터 왔는지를 체크합니다.
         requests[requestID].callback(response);
       }
     }
 
     contract OracleUser {
-      Oracle constant oracle = Oracle(0x1234567); // known contract
+      Oracle constant oracle = Oracle(0x1234567); // 알려진 contract
       function buySomething() {
         oracle.query("USD", this.oracleResponse);
       }
       function oracleResponse(bytes response) public {
         require(msg.sender == address(oracle));
-        // Use the data
+        // 데이타를 사용합니다.
       }
     }
 
@@ -491,65 +490,62 @@ Enums
 
 참조 타입
 ==================
+참조타입의 값은 다중의 다른 이름을 통해서 변경될 수 있습니다. value타입의 변수들은 어디에서든지 독립적인 복사본을 얻을 수 있는 것과는 대조적입니다.
+이런 이유로, 참조타입들은 value타입보다 좀더 주의를 가지면서 다루어야 합니다. 현재 참조타입은 structs,array 와 mapping으로 구성되어 있습니다. 
+참조타입을 사용한다면, 타입이 저장되어질 데이타 구역을 명시적으로 제공해 주어야 합니다:```memory```(함수호출에 생명주기를 가짐), ```storage```(state 변수가 저장될 위치), 
+```calldata```(함수 아규먼트를 포함하고 있는 특별한 데이타 위치로, 외부 함수 호출 파라미터들을 위해서만 허용)
 
-복합 타입, 즉 항상 256비트에 들어맞지 않는 타입은 우리가 이제까지 다뤘던 타입보다 더욱 신중하게 다뤄야 합니다.
-복합 타입을 복사하는 것은 비싼 연산이 될 수 있으므로, 우리는 복합 타입을 **메모리** (지속성이 없음) 와 **스토리지** (상태 변수가 저장되는 곳)중 어디에 저장하고 싶은지 생각해보아야 합니다.
+데이타의 위치를 변경하는 할당 또는 타입을 변경하는 것은 자동적인 복사를 하로록 할 것입니다. 반면에 같은 데이타 위치에 있는 할당들은 storage 타입일 경우에만 복사됩니다. 
+
 
 데이터 위치
 -------------
 
-모든 복합 타입은 자신이 *메모리* 나 *스토리지* 중 어디에 저장되었는지를 나타내는 "데이터 위치"가 추가적으로 존재합니다.
-컨텍스트에 따라 항상 기본값이 존재하지만, 타입에 ``스토리지`` 나 ``메모리`` 를 추가하여 재정의 할 수 있습니다. 
-함수 매개 변수(반환 매개 변수도 포함)의 기본값은 ``메모리`` 이고, 지역 변수의 기본값은 ``스토리지`` 이며 상태 변수의 위치는 ``스토리지`` 로 강제되어 있습니다.
+모든 참조 타입은, *arrays*와 *structs*, 추가적인 "데이타 위치"에 관한 annotation 이 있습니다.
+세가지 데이타 위치로, ``memory``, ``storage`` 와 ``calldata``가 있습니다. Calldata는 외부 contract 함수들의 파라미터로만 유효하고, 이런 파라미터들의 위해 필요합니다.
+Calldata는 변경할 수 없고, 함수 아규먼틀들이 저장되는 비영구적인 지역, 그리고 대부분 메모리와 비슷한 경향이 있습니다.
 
-또한 세 번째 데이터 위치인 ``calldata`` 가 있으며, 여기에는 함수 인자가 저장되고 수정 불가능하며 지속성이 없습니다.
-외부 함수의 함수 매개 변수(반환 매개변수 제외)는 ``calldata`` 에 강제 저장되며 거의 ``memory`` 처럼 작동합니다.
+.. note::
+    버전 0.5.0 이전에서는 데이타 위치가 생략되고 변수와 함수 타입 등의 종류에 따라 다른 기본 위치기 될 수 있지만, 
+    이후 버전에서는 모든 복합 타입들은 데이타 위치가 명시적으로 주어져야 합니다.
 
-데이터 위치는 변수가 할당되는 방식을 변경하기 때문에 중요합니다:
-assignments between storage and memory and also to a state variable (even from other state variables)
-always create an independent copy.
-Assignments to local storage variables only assign a reference though, and
-this reference always points to the state variable even if the latter is changed in the meantime.
-반면, 메모리에 저장된 참조 타입에서 다른 메모리에 저장된 참조 타입을 할당할땐 복사본을 만들지 않습니다.
+.. _data-location-assignment:
 
-::
+데이터 위치와 데이터 할당 하기
+Data location and assignment behaviour
 
-    pragma solidity ^0.4.0;
+데이터 위치들은 데이타의 영속을 위한것 뿐만 아니라, 할당의 의미와 연관이 있습니다.
+Data locations are not only relevant for persistency of data, but also for the semantics of assignments:
+
+* ``storage`` 와 ``memory`` (또는 ``calldata`` 로부터) 사이에서의 할당은 독립적인 복사본을 생성합니다.
+* ``memory`` 로부터 ``memory`` 로의 할당은 참조를 생성합니다. 하나의 메모리 변수의 변화는 같은 값을 참조하고 있는 다른 메모리 변수들에서 보이는 것을 의미합니다.
+* ``storage``에서 로칼 storage 변수로의 할당은 참조에 할당합니다.
+* ``storage``로 모든 할당은 항상 복사를 합니다. 지역변수 자채가 참조자라도, state 변수 또는 storage 구조체 타입의 지역 변수 멤버에 할당하는 것이 예가 될 수 있습니다.
+
+    pragma solidity >=0.4.0 <0.7.0;
 
     contract C {
-        uint[] x; // the data location of x is storage
+        uint[] x; // x의 데이타 위치는 storage 입니다.
 
-        // the data location of memoryArray is memory
-        function f(uint[] memoryArray) public {
-            x = memoryArray; // works, copies the whole array to storage
-            var y = x; // works, assigns a pointer, data location of y is storage
-            y[7]; // fine, returns the 8th element
-            y.length = 2; // fine, modifies x through y
-            delete x; // fine, clears the array, also modifies y
-            // The following does not work; it would need to create a new temporary /
-            // unnamed array in storage, but storage is "statically" allocated:
+        // memoryArray의 위치는 memory 입니다.
+        function f(uint[] memory memoryArray) public {
+            x = memoryArray; //  전체 배열을 storage로 복사합니다.
+            uint[] storage y = x; //  포인트를 할당하고 y의 위치는 storage 입니다.
+            y[7]; // 여덟번째 요소를 돌려줍니다.
+            y.length = 2; // x를 y를 통해서 변경합니다.
+            delete x; // 배열을 비우고, y를 변경합니다.
+            // 다음의 코드는 동작하지 않습니다; storage 안에 새로운 이름이 없는 임시 배열을 생성이 필요하지만, 
+            // storage는 정적으로 할당되어집니다.
             // y = memoryArray;
-            // This does not work either, since it would "reset" the pointer, but there
-            // is no sensible location it could point to.
+            // 포인터가 "reset" 되었으므로 이것은 동작하지 않을뿐아니라, 가리킬 수 있는 의미있는 위치가 없습니다.
             // delete y;
-            g(x); // calls g, handing over a reference to x
-            h(x); // calls h and creates an independent, temporary copy in memory
+            g(x); // x의 참조자를 다루는 h를 호출 
+            h(x); // h를 호출하고 독립적인 임시 복제본을 메모리에 생성한다.
         }
 
-        function g(uint[] storage storageArray) internal {}
-        function h(uint[] memoryArray) public {}
+        function g(uint[] storage) internal pure {}
+        function h(uint[] memory) public pure {}
     }
-
-요약
-^^^^^^^
-
-강제 데이터 위치:
- - 외부 함수의 매개 변수(반환값 미포함): calldata
- - 상태 변수: 스토리지
-
-기본 데이터 위치:
- - 함수의 매개변수(반환값 포함): 메모리
- - 모든 지역 변수: 스토리지
 
 .. index:: ! array
 
@@ -563,9 +559,14 @@ this reference always points to the state variable even if the latter is changed
 메모리 배열의 경우, 매핑이 될 수 없으며 만약 공개적으로 보여지는 함수의 인자라면 ABI 타입이어야 합니다.
 
 크기는 ``k`` 로 고정되었고 요소의 타입은 ``T`` 인 배열은 ``T[k]`` 로 표시하며, 동적인 크기의 배열은 ``T[]`` 로 표시합니다.
-예를 들자면, ``uint`` 타입을 요소로 하는 동적 크기 배열 5개로 구성된 배열은 ``uint[][5]`` 입니다(다른 언어들과는 달리 행과 열의 표현이 바뀌어있음에 유의하세요).
-세번째 동적 크기 배열의 두번째 uint에 접근하려면, ``x[2][1]`` 이렇게 하세요
-(인덱스는 0부터 시작하며 접근은 선언과는 반대되는 방식으로 작동합니다. i.e. ``x[2]`` shaves off one level in the type from the right)
+예를 들자면, ``uint`` 타입을 요소로 하는 동적 크기 배열 5개로 구성된 배열은 ``uint[][5]`` 입니다(C와 같은 다른 언어들과 달리 행과 열의 표현이 바뀌어있음에 유의하세요).
+
+인덱스는 0부터 시작하며 접근은 선언과는 반대되는 방식으로 작동합니다. 
+
+세번째 동적 크기 배열의 두번째 uint에 접근하려면, ``x[2][1]`` 이렇게 하고, 세번째 동적 배열을 접근하려면, ``x[2]``를 사용하세요. 
+``T[5] a``라는 배열이 될 수 있는 T타입의 배열이 있다면, ``a[2]``는 항상 ``T`` 타입입니다.
+
+배열의 요소들은 맵핑과 구조체를 포함한 어떤 타입이든 될수 있습니다. 
 
 ``bytes`` 와 ``string`` 타입의 변수는 특별한 형태의 배열입니다.
 ``bytes`` 는 ``byte[]`` 와 유사하지만 calldata로 꽉 차여져 있습니다.
@@ -660,7 +661,6 @@ this reference always points to the state variable even if the latter is changed
     이 함수는 새로운 length를 반환합니다.
 
 .. warning::
-    It is not yet possible to use arrays of arrays in external functions.
     외부 함수에서 배열의 배열을 사용하는건 아직 불가능합니다.
 
 .. warning::
@@ -676,40 +676,38 @@ this reference always points to the state variable even if the latter is changed
 
     contract ArrayContract {
         uint[2**20] m_aLotOfIntegers;
-        // Note that the following is not a pair of dynamic arrays but a
-        // dynamic array of pairs (i.e. of fixed size arrays of length two).
+        // 아래의 배열은 동적배열들의 쌍이 아니라, 길이가 2로 고정된 크기의 동적배열입니다.
         bool[2][] m_pairsOfFlags;
-        // newPairs is stored in memory - the default for function arguments
-
+        // newPairs는 메모리에 저장됩니다. - 함수 아규먼트를에 대한 기본
         function setAllFlagPairs(bool[2][] newPairs) public {
-            // assignment to a storage array replaces the complete array
+            // 스토리지 배열에 할당하는 것은 배열 전체를 교체하는 것입니다.
             m_pairsOfFlags = newPairs;
         }
 
         function setFlagPair(uint index, bool flagA, bool flagB) public {
-            // access to a non-existing index will throw an exception
+            // 존재하지 않는 인텍들에 접근하는 것은 예외를 발생 시킵니다.
             m_pairsOfFlags[index][0] = flagA;
             m_pairsOfFlags[index][1] = flagB;
         }
 
         function changeFlagArraySize(uint newSize) public {
-            // if the new size is smaller, removed array elements will be cleared
+            // 새로운 크기가 작으면, 제거된 배열의 요소들이 정리되어진다
             m_pairsOfFlags.length = newSize;
         }
 
         function clear() public {
-            // these clear the arrays completely
+            // 배열들을 완벽하게 삭제합니다.
             delete m_pairsOfFlags;
             delete m_aLotOfIntegers;
-            // identical effect here
+            // 위와 동일한 효과
             m_pairsOfFlags.length = 0;
         }
 
         bytes m_byteData;
 
         function byteArrays(bytes data) public {
-            // byte arrays ("bytes") are different as they are stored without padding,
-            // but can be treated identical to "uint8[]"
+            // 바이트 배열("bytes")은 패팅없이 저장되어지기 때문에 다르지만, 
+            // "uint8[]"와 동일하게 다루어 질 수 있습니다.
             m_byteData = data;
             m_byteData.length += 7;
             m_byteData[3] = byte(8);
@@ -721,9 +719,9 @@ this reference always points to the state variable even if the latter is changed
         }
 
         function createMemoryArray(uint size) public pure returns (bytes) {
-            // Dynamic memory arrays are created using `new`:
+            // 동적 메모리 배열들은 `new`를 사용하여 생성됩니다. : 
             uint[2][] memory arrayOfPairs = new uint[2][](size);
-            // Create a dynamic byte array:
+            // 동적 바이트 배열을 생성합니다.
             bytes memory b = new bytes(200);
             for (uint i = 0; i < b.length; i++)
                 b[i] = byte(i);
@@ -746,7 +744,7 @@ solidity는 아래의 예시처럼 구조체의 형식으로 새로운 타입을
     pragma solidity ^0.4.11;
 
     contract CrowdFunding {
-        // Defines a new type with two fields.
+        //두개의 필드와 함게 새로운 타입을 정의합니다. 
         struct Funder {
             address addr;
             uint amount;
@@ -764,16 +762,15 @@ solidity는 아래의 예시처럼 구조체의 형식으로 새로운 타입을
         mapping (uint => Campaign) campaigns;
 
         function newCampaign(address beneficiary, uint goal) public returns (uint campaignID) {
-            campaignID = numCampaigns++; // campaignID is return variable
-            // Creates new struct and saves in storage. We leave out the mapping type.
+            campaignID = numCampaigns++; // campaignID 는 반환되어질 변수입니다.
+            // 새로운 구조체를 생성하고 스토리지에 저장합니다. mapping 타입을 생략했습니다.
             campaigns[campaignID] = Campaign(beneficiary, goal, 0, 0);
         }
 
         function contribute(uint campaignID) public payable {
             Campaign storage c = campaigns[campaignID];
-            // Creates a new temporary memory struct, initialised with the given values
-            // and copies it over to storage.
-            // Note that you can also use Funder(msg.sender, msg.value) to initialise.
+            // 새로운 임시 메모리 구조체를 생성하고, 주어진 값으로 초기화 하였고, 스토리지로 복사였습니다.
+            // 초기화 하기 위해서 Funder(msg.sender, msg.value)를 사용할 수 있습니다.
             c.funders[c.numFunders++] = Funder({addr: msg.sender, amount: msg.value});
             c.amount += msg.value;
         }
@@ -885,14 +882,14 @@ delete
 
         function f() public {
             uint x = data;
-            delete x; // sets x to 0, does not affect data
-            delete data; // sets data to 0, does not affect x which still holds a copy
+            delete x; // x에 0으로 지정합니다. data의 값에 영향을 끼치지 않습니다.
+            delete data; // data를 0으로 지정합니다. data의 복사본인 x의 값에 영향을 끼치지 않습니다.
             uint[] storage y = dataArray;
-            delete dataArray; // this sets dataArray.length to zero, but as uint[] is a complex object, also
-            // y is affected which is an alias to the storage object
-            // On the other hand: "delete y" is not valid, as assignments to local variables
-            // referencing storage objects can only be made from existing storage objects.
-        }
+            delete dataArray; 
+            // dataArray.length를 0으로 지정하지만, uint[] 는 복합객체 이므로 스토리지 객체의 별칭인 y는 영향을 받습니다. 
+            // 반면에, "delete y" 유효하지 않습니다.  스토리지 객체들을 참조하는 지역 변수들은 이미 존재하고 있는 스토리지 객체들로 부터로만 할당 받을 수 있습니다.
+            // 즉, "delete y" 존재하지 않는 스토리지 객체를 할당하는 시도입니다.
+        
     }
 
 .. index:: ! type;conversion, ! cast
