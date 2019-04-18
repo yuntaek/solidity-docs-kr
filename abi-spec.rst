@@ -34,68 +34,68 @@
 
 다섯 번째 바이트부터 인코딩 된 인수가옵니다. 이 인코딩은 다른 장소에서도 사용됩니다 (예 : 반환 값과 이벤트 인수는 함수를 지정하는 4 바이트가없는 동일한 방식으로 인코딩됩니다.
 
-Types
+타입
 =====
 
-The following elementary types exist:
+아래에 같은 타입들이 존재합니다:
 
-- ``uint<M>``: unsigned integer type of ``M`` bits, ``0 < M <= 256``, ``M % 8 == 0``. e.g. ``uint32``, ``uint8``, ``uint256``.
+- ``uint<M>``: ``M`` 비트 크기인 부호가 없는 정수 타입 , ``0 < M <= 256``, ``M % 8 == 0``. 예) ``uint32``, ``uint8``, ``uint256``.
 
-- ``int<M>``: two's complement signed integer type of ``M`` bits, ``0 < M <= 256``, ``M % 8 == 0``.
+- ``int<M>``:  ``M`` 비트 크기인 2의 보수를 이용하는 부호가 있는 정수 타입 , ``0 < M <= 256``, ``M % 8 == 0``.
 
-- ``address``: equivalent to ``uint160``, except for the assumed interpretation and language typing. For computing the function selector, ``address`` is used.
+- ``address``: 가정된 해석과 언어 입력을 제외하고, ``uint160`` 와 동일 하다. 함수선택자를 계산시, ``address`` 가 사용된다..
 
-- ``uint``, ``int``: synonyms for ``uint256``, ``int256`` respectively. For computing the function selector, ``uint256`` and ``int256`` have to be used.
+- ``uint``, ``int``: 각각 ``uint256``, ``int256`` 와 동의어이다. 함수 선택자 계산시  ``uint256`` 와 ``int256`` 가 사용 되어져야 한다.
 
-- ``bool``: equivalent to ``uint8`` restricted to the values 0 and 1. For computing the function selector, ``bool`` is used.
+- ``bool``: 값이 1과 0으로 제한되어진 것 외에 ``uint8``과 동일하다. 함수 선택자 계산시, ``bool`` 이 사용된다.
 
-- ``fixed<M>x<N>``: signed fixed-point decimal number of ``M`` bits, ``8 <= M <= 256``, ``M % 8 ==0``, and ``0 < N <= 80``, which denotes the value ``v`` as ``v / (10 ** N)``.
+- ``fixed<M>x<N>``: 부호가 있는 소수점 이하의 숫자가 고정된 수로 ``M`` 비트로 이루어진 타입, ``8 <= M <= 256``, ``M % 8 ==0``,과 ``0 < N <= 80``, 값을 의미하는 ``v`` 는 ``v / (10 ** N)`` 로 표현된다.
 
-- ``ufixed<M>x<N>``: unsigned variant of ``fixed<M>x<N>``.
+- ``ufixed<M>x<N>``:  ``fixed<M>x<N>``의 부호가 없는 타입
 
-- ``fixed``, ``ufixed``: synonyms for ``fixed128x19``, ``ufixed128x19`` respectively. For computing the function selector, ``fixed128x19`` and ``ufixed128x19`` have to be used.
+- ``fixed``, ``ufixed``: 각각 ``fixed128x19``, ``ufixed128x19``의 동의어 이다. 함수 선택자를 계산시  ``fixed128x19`` 와 ``ufixed128x19`` 을 사용해야만 한다..
 
-- ``bytes<M>``: binary type of ``M`` bytes, ``0 < M <= 32``.
+- ``bytes<M>``: ``M`` 바이트의 바이너리 타입의 , ``0 < M <= 32``.
 
-- ``function``: an address (20 bytes) folled by a function selector (4 bytes). Encoded identical to ``bytes24``.
+- ``function``: 함수 선택자(4 bytes)에 뒤에 오는 주소(20 bytes). ``bytes24``와 동일하게 인코딩 되어진다.
 
-The following (fixed-size) array type exists:
+아래와 같은 (고정된 크기)배열 타입들이 존재합니다:
 
-- ``<type>[M]``: a fixed-length array of ``M`` elements, ``M > 0``, of the given type.
+- ``<type>[M]``: 주어진 타입의 ``M`` 개의 요소들로 이루어진 고정된 길이의 배열, ``M > 0``
 
-The following non-fixed-size types exist:
+아래와 같은 가변 길이 타입 타입들이 존재합니다:
 
-- ``bytes``: dynamic sized byte sequence.
+- ``bytes``: 가변 크기의 바이트 바이트 시퀀스.
 
-- ``string``: dynamic sized unicode string assumed to be UTF-8 encoded.
+- ``string``: UTF-8으로 인코딩으로 된것으로 간주하는 가변길이의 유니코드 문자열
 
-- ``<type>[]``: a variable-length array of elements of the given type.
+- ``<type>[]``: 주어진 타입의 가변길이의 요소들로 이루어진 배열
 
-Types can be combined to a tuple by enclosing a finite non-negative number
-of them inside parentheses, separated by commas:
+타입들은 괄혼안에서 유한개 타입들을 ","로 구분 하여 묶을 수 있다.:
 
-- ``(T1,T2,...,Tn)``: tuple consisting of the types ``T1``, ..., ``Tn``, ``n >= 0``
+- ``(T1,T2,...,Tn)``: 타입 ``T1``, ..., ``Tn``, ``n >= 0``
+ 이루어진 튜플
 
-It is possible to form tuples of tuples, arrays of tuples and so on.
+튜플의 튜플, 튜플의 배열 등등의 형태를 갖을 수 있다.
 
 .. note::
-    Solidity supports all the types presented above with the same names with the exception of tuples. The ABI tuple type is utilised for encoding Solidity ``structs``.
+    솔리디티는 위의 나열된 모든 타입들 중 튜플을 제외하고 같은 이름을 지원합니다. ABI 튜플 타입은 인코딩된 솔리디티 ``structs``를 위해 이용되어진다.
 
-Formal Specification of the Encoding
+인코딩의 공식 사양
 ====================================
 
+우리는 공식적으로 인코딩을 규격화 할 것입니다. 다음의 따라는 요소들은 
 We will now formally specify the encoding, such that it will have the following
 properties, which are especially useful if some arguments are nested arrays:
 
 Properties:
+  1. 값에 접근하기 위해 필요한 읽기 횟수는 적어도 인자 배열 구조 안의 값의 깊이 이다. 즉, ``a_i[k][l][r]``를 읽기 위해 4회의 읽기가 필요한다.  
+  ABI의 이전 버전에서, 최악의 경우의 읽기 횟수는 가변적인 파라미터의 총 갯수 만큼 순차적으로 증가되었다.
+  2. 변수 또는 배열의 요소의 데이타는 다른 데이터와 (인터리빙)교차적으로 배치 될 수 없고, 재 배치 될 수 있다.  상대적인 "addresses"를 사용한다.
 
-  1. The number of reads necessary to access a value is at most the depth of the value inside the argument array structure, i.e. four reads are needed to retrieve ``a_i[k][l][r]``. In a previous version of the ABI, the number of reads scaled linearly with the total number of dynamic parameters in the worst case.
+동적인 타입과 정적인 타입을 구분하였다. 정적인 타입은 현 블록 후에 그 자리에서 인코딩 되고, 동적인 타입들은 현재블록 다음의 분리되어 배정된 곳에서 인코딩 된다.
 
-  2. The data of a variable or array element is not interleaved with other data and it is relocatable, i.e. it only uses relative "addresses"
-
-We distinguish static and dynamic types. Static types are encoded in-place and dynamic types are encoded at a separately allocated location after the current block.
-
-**Definition:** The following types are called "dynamic":
+**정의:** 아래의 타입들은 "dynamic"이다:
 
 * ``bytes``
 * ``string``
@@ -103,10 +103,10 @@ We distinguish static and dynamic types. Static types are encoded in-place and d
 * ``T[k]`` for any dynamic ``T`` and any ``k > 0``
 * ``(T1,...,Tk)`` if any ``Ti`` is dynamic for ``1 <= i <= k``
 
-All other types are called "static".
+모든 다른 타입들을 정적이라 부른다.
 
-**Definition:** ``len(a)`` is the number of bytes in a binary string ``a``.
-The type of ``len(a)`` is assumed to be ``uint256``.
+**정의:** ``len(a)`` 바이너리 문자열 ``a``안에 바이트 길이이다.
+``len(a)``의 타입은 ``uint256``로 간주되어 진다.
 
 We define ``enc``, the actual encoding, as a mapping of values of the ABI types to binary strings such
 that ``len(enc(X))`` depends on the value of ``X`` if and only if the type of ``X`` is dynamic.
